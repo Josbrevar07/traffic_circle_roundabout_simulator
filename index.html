@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clases de Manejo Personalizadas.com - Simulador de Rotondas</title>
+    <!-- Bootstrap 5 -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- FontAwesome for Social Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        background-color: #1a1d21;
+        color: #f0f2f5;
+        font-family: "Segoe UI", sans-serif;
+      }
+
+      .news-ticker-container {
+        background-color: #ffc107;
+        color: #000;
+        padding: 8px 0;
+        overflow: hidden;
+        position: sticky;
+        top: 0;
+        white-space: nowrap;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        z-index: 1030;
+      }
+      .news-ticker {
+        display: inline-block;
+        padding-left: 100%;
+        animation: marquee 100s linear infinite;
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+      @keyframes marquee {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+      .news-ticker:hover {
+        animation-play-state: paused;
+      }
+
+      #gameCanvas {
+        background-color: #343a40;
+        border: 4px solid #495057;
+        border-radius: 12px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+        display: block;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 600px;
+        height: auto;
+        aspect-ratio: 1 / 1;
+      }
+
+      /* OVERLAY POP-UP CSS */
+      #resultOverlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 85%;
+        max-width: 400px;
+        z-index: 100;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+      }
+
+      .panel {
+        background-color: #212529;
+        border-radius: 12px;
+        padding: 25px;
+        border: 1px solid #343a40;
+      }
+      .btn-custom {
+        border: 2px solid transparent;
+        transition: all 0.2s;
+        font-weight: 500;
+      }
+      .btn-custom.active {
+        border-color: #fff;
+        transform: scale(1.03);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      }
+
+      .footer-social a {
+        transition: color 0.3s;
+      }
+      .footer-social a:hover {
+        color: #ffc107 !important;
+        transform: scale(1.1);
+        display: inline-block;
+      }
+
+      .crash-flash {
+        animation: flash 0.5s ease-in-out;
+      }
+      @keyframes flash {
+        0% {
+          background-color: #dc3545;
+        }
+        100% {
+          background-color: #343a40;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .btn-custom {
+          padding: 10px 5px;
+          font-size: 0.9rem;
+        }
+        .panel {
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body class="pb-4">
+    <div class="news-ticker-container">
+      <div class="news-ticker">
+        🚗 // ¡Recuerde! Si usted aprobó el curso de manejo básico o la prueba
+        teórica antes del 1 de marzo de 2026, tiene hasta el jueves 31 de
+        diciembre de 2026 para aprobar la respectiva prueba práctica de
+        moto-cuadra, sin tener que hacer el examen teórico o curso de básico de
+        manejo para licencia tipo A. // clases-de-manejo-personalizadas.com //
+        Recuerde, que ahora son 2 exámenes teóricos o cursos básicos de manejo,
+        y 2 manuales distintos para carro y moto. A la hora de pagar las
+        pruebas, le recomendaría tener mucho cuidado, si es para tipo B-1, tiene
+        que decir PTV, y si es para tipo A, PTM. // Estamos para servirles,
+        cualquier duda, consulta, clases personalizadas de manejo, de inglés, de
+        cómputo, estamos a la orden, (+506)8691-7316. // ¿Necesita una página
+        web? O aprender algún otro idioma, si gusta escríbanos al WhatsApp al
+        (+506)7017-8455 de Learning Any Language. // Desde Santiago de Puriscal,
+        San José, Costa Rica, pa'l mundo. // ¡Para servirles! // 🚦
+      </div>
+    </div>
+
+    <div class="container mt-4">
+      <div class="row mb-3 text-center">
+        <h5 class="text-warning text-uppercase tracking-wider mb-1 fs-6">
+          clases-de-manejo-personalizadas.com presenta
+        </h5>
+        <h1 class="text-light fw-bold fs-2 fs-md-1">
+          Simulador Interactivo de Rotondas
+        </h1>
+        <p class="text-warning fw-bold">
+          Velocidad Máxima de 30 KM/H. ¡CUIDADO CON LOS DEMÁS CARROS DENTRO DE
+          LA ROTONDA! SU CARRO SERÁ DE COLOR AZUL Y APARECERÁ EN LA 'ENTRADA',
+          CUANDO HAYA SELECCIONADO UN CARRIL DE INGRESO.
+        </p>
+      </div>
+
+      <div class="row g-4 justify-content-center">
+        <!-- CANVAS CONTAINER (Position Relative para sostener el Overlay) -->
+        <div class="col-lg-7 order-1 order-lg-1 position-relative">
+          <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+          <!-- POP-UP OVERLAY -->
+          <div id="resultOverlay" class="alert d-none p-4">
+            <div id="resultMessage" class="text-start"></div>
+            <button
+              id="nextBtnOverlay"
+              class="btn btn-dark w-100 mt-3 fw-bold shadow-sm py-2"
+            >
+              Siguiente Ejercicio <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="col-lg-5 order-2 order-lg-2">
+          <div class="panel">
+            <h4 id="missionText" class="text-info mb-4 fw-bold">
+              Misión: Cargando...
+            </h4>
+
+            <div class="mb-4">
+              <label class="form-label text-light fw-bold"
+                >1. Seleccione Carril de Ingreso:</label
+              >
+              <div class="row g-2">
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-success w-100 lane-btn btn-custom h-100"
+                    data-lane="outer"
+                  >
+                    Externo.
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-warning w-100 lane-btn btn-custom h-100"
+                    data-lane="middle"
+                  >
+                    Medio.
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-primary w-100 lane-btn btn-custom h-100"
+                    data-lane="inner"
+                  >
+                    Interno.
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label text-light fw-bold"
+                >2. Direccional para INGRESAR:</label
+              >
+              <div class="row g-2">
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-info w-100 sig-in-btn btn-custom h-100"
+                    data-sig="left"
+                  >
+                    Izquierdo.
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-warning w-100 sig-in-btn btn-custom h-100"
+                    data-sig="right"
+                  >
+                    Derecho.
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-danger w-100 sig-in-btn btn-custom h-100"
+                    data-sig="none"
+                  >
+                    Ninguno.
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label text-light fw-bold"
+                >3. Direccional SALIR:</label
+              >
+              <div class="row g-2">
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-info w-100 sig-out-btn btn-custom h-100"
+                    data-sig="left"
+                  >
+                    Izquierdo.
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-warning w-100 sig-out-btn btn-custom h-100"
+                    data-sig="right"
+                  >
+                    Derecho.
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    class="btn btn-outline-danger w-100 sig-out-btn btn-custom h-100"
+                    data-sig="none"
+                  >
+                    Ninguno.
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              id="startAnimationBtn"
+              class="btn btn-success btn-lg w-100 fw-bold shadow py-3"
+            >
+              ¡Acelerar Ahora!
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <footer class="mt-5 pt-4 text-center border-top border-secondary">
+        <p class="text-white mb-1 fw-bold fs-5">Designed by: Josbrevar07</p>
+        <div class="footer-social mb-3">
+          <a
+            href="https://walink.co/341b8e"
+            class="text-light mx-2 fs-4"
+            title="WhatsApp"
+            ><i class="fab fa-whatsapp"></i
+          ></a>
+          <a
+            href="https://www.instagram.com/josbrevar07/"
+            class="text-light mx-2 fs-4"
+            title="Instagram"
+            ><i class="fab fa-instagram"></i
+          ></a>
+          <a
+            href="https://www.facebook.com/josue.brenesvargas"
+            class="text-light mx-2 fs-4"
+            title="Facebook"
+            ><i class="fab fa-facebook"></i
+          ></a>
+          <a
+            href="https://www.youtube.com/@josbrevar0773"
+            class="text-light mx-2 fs-4"
+            title="YouTube"
+            ><i class="fab fa-youtube"></i
+          ></a>
+          <a
+            href="https://clases-de-manejo-personalizadas.com"
+            class="text-light mx-2 fs-4"
+            title="Website"
+            ><i class="fab fa-chrome"></i
+          ></a>
+        </div>
+        <p class="text-light small">
+          Simulador diseñado y creado en Santiago de Puriscal, San José, Costa
+          Rica | © 2026 Todos los derechos reservados
+        </p>
+      </footer>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      let targetExit = 1;
+      let selectedLane = null;
+      let signalIn = null;
+      let signalOut = null;
+
+      let playerPath = [];
+      let frameIndex = 0;
+      let isPlayerMoving = false;
+      let gameActive = true;
+
+      let npcs = [];
+      const npcColors = [
+        "#e74c3c",
+        "#9b59b6",
+        "#e67e22",
+        "#1abc9c",
+        "#95a5a6",
+        "#f1c40f",
+      ];
+
+      function setupButtons(selector, variableSetter) {
+        document.querySelectorAll(selector).forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            document
+              .querySelectorAll(selector)
+              .forEach((b) =>
+                b.classList.remove("active", "text-dark", "fw-bold"),
+              );
+            e.target.classList.add("active", "text-dark", "fw-bold");
+            variableSetter(e.target.dataset.lane || e.target.dataset.sig);
+          });
+        });
+      }
+
+      setupButtons(".lane-btn", (val) => (selectedLane = val));
+      setupButtons(".sig-in-btn", (val) => (signalIn = val));
+      setupButtons(".sig-out-btn", (val) => (signalOut = val));
+
+      function spawnTraffic() {
+        npcs = [];
+        const radii = { outer: 135, middle: 105, inner: 75 };
+        const lanes = ["outer", "middle", "inner"];
+
+        for (let i = 0; i < 4; i++) {
+          let l = lanes[Math.floor(Math.random() * lanes.length)];
+          let linearSpeed = Math.random() * 0.3 + 1.3;
+
+          npcs.push({
+            lane: l,
+            radius: radii[l],
+            angle: Math.random() * Math.PI * 2,
+            speed: linearSpeed / radii[l],
+            color: npcColors[Math.floor(Math.random() * npcColors.length)],
+          });
+        }
+      }
+
+      function initGame() {
+        targetExit = Math.floor(Math.random() * 4) + 1;
+        document.getElementById("missionText").innerHTML =
+          `Misión: Tomar la <strong>Salida ${targetExit}</strong>`;
+
+        selectedLane = signalIn = signalOut = null;
+        frameIndex = 0;
+        playerPath = [];
+        isPlayerMoving = false;
+        gameActive = true;
+
+        document
+          .querySelectorAll(".btn-custom")
+          .forEach((b) => b.classList.remove("active", "text-dark", "fw-bold"));
+        document.getElementById("startAnimationBtn").disabled = false;
+
+        // Esconder el overlay de resultados
+        document.getElementById("resultOverlay").classList.add("d-none");
+        canvas.classList.remove("crash-flash");
+
+        spawnTraffic();
+      }
+
+      function drawScene() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const cx = 300,
+          cy = 300;
+
+        ctx.fillStyle = "#242a26";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#3a3f44";
+        ctx.fillRect(cx - 90, 0, 180, 600);
+        ctx.fillRect(0, cy - 90, 600, 180);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 160, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 55, 0, Math.PI * 2);
+        ctx.fillStyle = "#203024";
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#6c757d";
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 90, 0, Math.PI * 2);
+        ctx.moveTo(cx + 120, cy);
+        ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+        ctx.setLineDash([12, 12]);
+        ctx.strokeStyle = "#dee2e6";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 18px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("Salida 2", cx + 105, 30);
+        ctx.fillText("Salida 1", 500, cy - 105);
+        ctx.fillText("Salida 4 (Entrada)", cx + 105, 580);
+        ctx.fillText("Salida 3", 15, cy + 115);
+
+        for (let i = 0; i < 4; i++) {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate((i * Math.PI) / 2);
+
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(2, 162, 86, 5);
+
+          ctx.strokeStyle = "#ffc107";
+          ctx.lineWidth = 3;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.moveTo(0, 160);
+          ctx.lineTo(0, 300);
+          ctx.stroke();
+
+          ctx.strokeStyle = "#dee2e6";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([15, 15]);
+          ctx.beginPath();
+          ctx.moveTo(30, 160);
+          ctx.lineTo(30, 300);
+          ctx.moveTo(60, 160);
+          ctx.lineTo(60, 300);
+          ctx.moveTo(-45, 160);
+          ctx.lineTo(-45, 300);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = "#fff";
+          let triangleStarts = [4, 34, 64];
+          triangleStarts.forEach((tx) => {
+            ctx.beginPath();
+            ctx.moveTo(tx, 172);
+            ctx.lineTo(tx + 22, 172);
+            ctx.lineTo(tx + 11, 188);
+            ctx.fill();
+          });
+
+          ctx.font = "bold 16px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("CEDA", 45, 210);
+
+          ctx.beginPath();
+          ctx.arc(45, 255, 26, 0, Math.PI * 2);
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = "#dc3545";
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(45, 255, 24, 0, Math.PI * 2);
+          ctx.fillStyle = "#fff";
+          ctx.fill();
+
+          ctx.fillStyle = "#111";
+          ctx.font = "900 18px Arial";
+          ctx.fillText("30", 45, 254);
+
+          ctx.font = "bold 9px Arial";
+          ctx.fillText("KP/H", 45, 268);
+
+          ctx.restore();
+        }
+      }
+
+      function drawTraffic() {
+        const cx = 300,
+          cy = 300;
+        npcs.forEach((npc) => {
+          let currentSpeed = npc.speed;
+
+          if (isPlayerMoving && frameIndex < playerPath.length) {
+            let p = playerPath[frameIndex];
+            let nx = cx + npc.radius * Math.cos(npc.angle);
+            let ny = cy + npc.radius * Math.sin(npc.angle);
+            let dist = Math.hypot(p.x - nx, p.y - ny);
+            let pRadius = Math.hypot(p.x - cx, p.y - cy);
+
+            let sameLane = Math.abs(pRadius - npc.radius) < 25;
+
+            if (sameLane && (p.state === "circling" || p.state === "exiting")) {
+              let pAngle = Math.atan2(p.y - cy, p.x - cx);
+              let nAngle = Math.atan2(ny - cy, nx - cx);
+              let diff = nAngle - pAngle;
+
+              while (diff > Math.PI) diff -= Math.PI * 2;
+              while (diff < -Math.PI) diff += Math.PI * 2;
+
+              if (diff > 0 && diff < 1.0) {
+                if (dist < 90 && dist > 32) {
+                  currentSpeed = npc.speed * 0.1;
+                }
+              }
+            }
+          }
+
+          npc.angle -= currentSpeed;
+          let newNx = cx + npc.radius * Math.cos(npc.angle);
+          let newNy = cy + npc.radius * Math.sin(npc.angle);
+          drawCar(newNx, newNy, npc.angle - Math.PI / 2, npc.color, false);
+        });
+      }
+
+      function drawCar(x, y, angle, bodyColor, isPlayer) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
+        ctx.fillStyle = "#111";
+        ctx.fillRect(-12, -18, 10, 6);
+        ctx.fillRect(2, -18, 10, 6);
+        ctx.fillRect(-12, 12, 10, 6);
+        ctx.fillRect(2, 12, 10, 6);
+
+        ctx.fillStyle = bodyColor;
+        ctx.beginPath();
+        ctx.roundRect(-16, -14, 32, 28, 6);
+        ctx.fill();
+
+        ctx.fillStyle = "#1c2833";
+        ctx.beginPath();
+        ctx.roundRect(-4, -11, 14, 22, 2);
+        ctx.fill();
+
+        if (isPlayer && isPlayerMoving && playerPath[frameIndex]) {
+          const isBlinking = Math.floor(Date.now() / 300) % 2 === 0;
+          let showLeft = false;
+          let showRight = false;
+
+          let framesLeft = playerPath.length - frameIndex;
+
+          if (framesLeft > 60) {
+            if (signalIn === "left") showLeft = true;
+            if (signalIn === "right") showRight = true;
+          } else {
+            if (signalOut === "left") showLeft = true;
+            if (signalOut === "right") showRight = true;
+          }
+
+          if (isBlinking && showLeft) {
+            ctx.fillStyle = "#ffb700";
+            ctx.fillRect(-15, -14, 5, 5);
+          }
+          if (isBlinking && showRight) {
+            ctx.fillStyle = "#ffb700";
+            ctx.fillRect(-15, 9, 5, 5);
+          }
+        }
+        ctx.restore();
+      }
+
+      function generatePath() {
+        playerPath = [];
+        const speed = 1.5;
+        const cx = 300,
+          cy = 300;
+
+        let laneOff =
+          selectedLane === "outer" ? 75 : selectedLane === "middle" ? 45 : 15;
+        let R =
+          selectedLane === "outer" ? 135 : selectedLane === "middle" ? 105 : 75;
+
+        let offsetA = Math.asin(laneOff / R);
+        let startA = Math.PI / 2 - offsetA;
+
+        let exitA;
+        if (targetExit === 1) exitA = offsetA;
+        if (targetExit === 2) exitA = -Math.PI / 2 + offsetA;
+        if (targetExit === 3) exitA = -Math.PI + offsetA;
+        if (targetExit === 4) exitA = -Math.PI * 1.5 + offsetA;
+
+        function addPoint(x, y, state) {
+          playerPath.push({ x, y, state, angle: 0 });
+        }
+
+        for (let y = 600; y > cy + R + 40; y -= speed)
+          addPoint(cx + laneOff, y, "entering");
+
+        let enterSteps = 20;
+        let last = playerPath[playerPath.length - 1];
+        let circP = {
+          x: cx + R * Math.cos(startA),
+          y: cy + R * Math.sin(startA),
+        };
+        for (let i = 0; i <= enterSteps; i++) {
+          let t = i / enterSteps;
+          addPoint(
+            last.x + (circP.x - last.x) * t,
+            last.y + (circP.y - last.y) * t,
+            "entering",
+          );
+        }
+
+        let arcSteps = Math.max(
+          15,
+          Math.floor((Math.abs(exitA - startA) * R) / speed),
+        );
+        for (let i = 0; i <= arcSteps; i++) {
+          let a = startA + (exitA - startA) * (i / arcSteps);
+          addPoint(cx + R * Math.cos(a), cy + R * Math.sin(a), "circling");
+        }
+
+        last = playerPath[playerPath.length - 1];
+        for (let i = 0; i < 30; i++) {
+          if (targetExit === 1) addPoint(last.x + speed * i, last.y, "exiting");
+          if (targetExit === 2) addPoint(last.x, last.y - speed * i, "exiting");
+          if (targetExit === 3) addPoint(last.x - speed * i, last.y, "exiting");
+          if (targetExit === 4) addPoint(last.x, last.y + speed * i, "exiting");
+        }
+
+        for (let i = 0; i < playerPath.length - 1; i++) {
+          playerPath[i].angle = Math.atan2(
+            playerPath[i + 1].y - playerPath[i].y,
+            playerPath[i + 1].x - playerPath[i].x,
+          );
+        }
+        playerPath[playerPath.length - 1].angle =
+          playerPath[playerPath.length - 2].angle;
+      }
+
+      function checkCollisions() {
+        if (!isPlayerMoving || frameIndex >= playerPath.length) return false;
+        let p = playerPath[frameIndex];
+        const cx = 300,
+          cy = 300;
+
+        for (let npc of npcs) {
+          let nx = cx + npc.radius * Math.cos(npc.angle);
+          let ny = cy + npc.radius * Math.sin(npc.angle);
+          let distance = Math.hypot(p.x - nx, p.y - ny);
+
+          if (distance < 28) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function evaluateRules() {
+        let errors = [];
+
+        if (
+          selectedLane === "outer" &&
+          (targetExit === 3 || targetExit === 4)
+        ) {
+          errors.push(
+            "<strong>Carril Externo:</strong> SOLO permite abandonar en la 1era o 2da salida.",
+          );
+        }
+        if (
+          selectedLane === "middle" &&
+          (targetExit === 1 || targetExit === 4)
+        ) {
+          errors.push(
+            "<strong>Carril Medio:</strong> Permite abandonar en la 2da o 3era salida.",
+          );
+        }
+        if (
+          selectedLane === "inner" &&
+          (targetExit === 1 || targetExit === 2)
+        ) {
+          errors.push(
+            "<strong>Carril Interno:</strong> Se usa para la 3era salida o giro en U (4ta).",
+          );
+        }
+
+        if (!signalIn || signalIn === "none")
+          errors.push("Faltó direccional al INGRESAR.");
+        if (!signalOut || signalOut !== "right")
+          errors.push("Para SALIR, SIEMPRE se pone direccional DERECHA.");
+
+        const resOverlay = document.getElementById("resultOverlay");
+        const resMessage = document.getElementById("resultMessage");
+
+        resOverlay.classList.remove(
+          "d-none",
+          "alert-success",
+          "alert-danger",
+          "alert-warning",
+        );
+
+        if (errors.length === 0) {
+          resOverlay.classList.add("alert-success");
+          resMessage.innerHTML =
+            "<h4 class='mb-3 border-bottom pb-2'><i class='fas fa-check-circle me-2'></i>¡Excelente Maniobra!</h4><p class='mb-0'>Se aplicaron bien las reglas y movimientos, sin choques. ¡Muy bien!</p>";
+        } else {
+          resOverlay.classList.add("alert-warning");
+          resMessage.innerHTML =
+            "<h4 class='mb-3 border-bottom pb-2 text-dark'><i class='fas fa-exclamation-triangle me-2'></i>Errores de Regulación:</h4><ul class='mb-0 text-dark'>" +
+            errors.map((e) => `<li class='mb-2'>${e}</li>`).join("") +
+            "</ul>";
+        }
+      }
+
+      function handleCrash() {
+        gameActive = false;
+        isPlayerMoving = false;
+        canvas.classList.add("crash-flash");
+
+        const resOverlay = document.getElementById("resultOverlay");
+        const resMessage = document.getElementById("resultMessage");
+
+        resOverlay.classList.remove("d-none", "alert-success", "alert-warning");
+        resOverlay.classList.add("alert-danger");
+        resMessage.innerHTML =
+          "<h4 class='mb-3 border-bottom pb-2'><i class='fas fa-car-crash me-2'></i>¡CHOQUE!</h4><p class='mb-0'>No respetaste el CEDA o te cruzaste de carril imprudentemente. Debes esperar a que haya un espacio seguro antes de acelerar.</p>";
+      }
+
+      function gameLoop() {
+        drawScene();
+        drawTraffic();
+
+        if (isPlayerMoving && gameActive) {
+          let p = playerPath[frameIndex];
+          drawCar(p.x, p.y, p.angle, "#0d6efd", true);
+
+          if (checkCollisions()) {
+            handleCrash();
+          } else {
+            frameIndex++;
+            if (frameIndex >= playerPath.length) {
+              isPlayerMoving = false;
+              evaluateRules();
+            }
+          }
+        } else if (!isPlayerMoving && frameIndex === 0 && selectedLane) {
+          let laneOff =
+            selectedLane === "outer" ? 75 : selectedLane === "middle" ? 45 : 15;
+          drawCar(300 + laneOff, 570, -Math.PI / 2, "#0d6efd", true);
+        }
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      document
+        .getElementById("startAnimationBtn")
+        .addEventListener("click", () => {
+          if (!selectedLane || !signalIn || !signalOut)
+            return alert("Complete los 3 pasos primero.");
+
+          document.getElementById("startAnimationBtn").disabled = true;
+          generatePath();
+          frameIndex = 0;
+          isPlayerMoving = true;
+        });
+
+      document
+        .getElementById("nextBtnOverlay")
+        .addEventListener("click", initGame);
+
+      initGame();
+      gameLoop();
+    </script>
+  </body>
+</html>
